@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { personas } from "@/lib/site.config";
+import { buildEnvelope, type RepoPersona } from "@/lib/contact";
 
 /**
  * ContactForm — persona-first. The visitor picks who they are, and the form
@@ -54,15 +55,29 @@ export function ContactForm() {
     if (Object.keys(next).length > 0) return;
 
     setStatus("sending");
+
+    // Build the ecosystem UpsertEnvelope. The persona -> ias_source mapping,
+    // channel attribution, and name split all live in lib/contact.ts so this
+    // component stays UI-only. n8n handles HubSpot upsert + Resend send.
+    const envelope = buildEnvelope({
+      persona: persona as RepoPersona,
+      name: String(data.get("name") ?? ""),
+      email: String(data.get("email") ?? ""),
+      org: String(data.get("org") ?? ""),
+      message: String(data.get("message") ?? ""),
+    });
+
+    // Carry the form-level source + timestamp + honeypot echo as non-mapped
+    // metadata so n8n retains provenance and can re-check the honeypot server
+    // side (defense in depth). These live in meta, not on the contact record.
     const payload = {
-      persona,
-      name: data.get("name"),
-      email: data.get("email"),
-      org: data.get("org"),
-      message: data.get("message"),
-      company_website: honeypot, // always "" for humans; n8n re-checks
-      source: SOURCE,
-      submitted_at: new Date().toISOString(),
+      ...envelope,
+      meta: {
+        ...envelope.meta,
+        formSource: SOURCE,
+        submittedAt: new Date().toISOString(),
+        honeypot, // always "" for humans; n8n drops the lead if populated
+      },
     };
 
     try {
