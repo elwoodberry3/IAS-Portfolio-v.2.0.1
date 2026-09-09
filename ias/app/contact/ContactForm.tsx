@@ -17,6 +17,9 @@ import { buildEnvelope, type RepoPersona } from "@/lib/contact";
 
 const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT ?? "";
 
+// https://plutomation.app.n8n.cloud/webhook/ias-contact-upsert
+// https://iautomateshit.app.n8n.cloud/webhook/ias-contact-upsert
+
 // Attribution — every lead is traceable to this form.
 const SOURCE = "http://i-automate-shit.com/contact";
 
